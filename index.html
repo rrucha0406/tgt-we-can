@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Together We Can Foundation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <style>
+      body {
+          font-family: 'Montserrat', sans-serif;
+      }
+      /* Offset for sticky navbar when scrolling to anchor links */
+      #about, #abhyasika, #mental-health, #services, #projects, #contact {
+        scroll-margin-top: 6rem;
+      }
+      @keyframes fadeInDown {
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fade-in-down { animation: fadeInDown 0.8s ease-out forwards; }
+      .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; animation-delay: 0.2s; }
+      
+      .circular-gallery-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        perspective: 1000px;
+        transform-style: preserve-3d;
+      }
+
+      .circular-gallery-items {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        transition: transform 0.5s ease-out;
+      }
+
+      .circular-gallery-item {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        overflow: hidden;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        cursor: grab;
+        user-select: none;
+        transform-origin: 50% 50%;
+      }
+      .circular-gallery-item:active { cursor: grabbing; }
+      
+      /* Mobile Menu Animation */
+      .mobile-menu-enter { opacity: 0; transform: translateY(-10px); }
+      .mobile-menu-enter-active { opacity: 1; transform: translateY(0); transition: opacity 300ms, transform 300ms; }
+      .mobile-menu-exit { opacity: 1; transform: translateY(0); }
+      .mobile-menu-exit-active { opacity: 0; transform: translateY(-10px); transition: opacity 300ms, transform 300ms; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased selection:bg-pink-100 selection:text-pink-700">
+    <div id="root"></div>
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+
+    <script type="text/babel">
+        const { useState, useRef, useEffect, useMemo, useCallback } = React;
+        const { createRoot } = ReactDOM;
+
+        // --- ICONS ---
+        const HandHelping = ({ size = 20, className = "" }) => ( <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M11 1.9c.7 0 1.4.3 1.8.8l4 5.2c.5.5.8 1.2.8 1.9V10a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V8.8c0-.7.3-1.4.8-1.9L11 1.9z" /><path d="M12 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg> );
+        const Info = ({ size = 20, className = "" }) => ( <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg> );
+        const Phone = ({ size = 20, className = "" }) => ( <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg> );
+        const Home = ({ size = 20, className = "" }) => ( <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 2a7 7 0 0 0-7 7v11a2 2 0 0 0 2 2h4v-7h6v7h4a2 2 0 0 0 2-2V9a7 7 0 0 0-7-7z" /></svg> );
+        const Mail = ({ size = 20, className = "" }) => ( <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg> );
+        const BookOpen = ({ size = 20, className = "" }) => ( <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg> );
+        const Brain = ({ size = 20, className = "" }) => ( <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 5c-3.18 0-6 2.82-6 6a6 6 0 0 0 12 0c0-3.18-2.82-6-6-6z" /><path d="M12 18c-3.18 0-6-2.82-6-6" /><path d="M12 18c3.18 0 6-2.82 6-6" /><path d="M12 11a6 6 0 0 1-6 6" /><path d="M12 11a6 6 0 0 0 6 6" /></svg> );
+        const Menu = ({ size = 24, className = "" }) => ( <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="6" x2="20" y2="6" /><line x1="4" y1="18" x2="20" y2="18" /></svg> );
+        const X = ({ size = 24, className = "" }) => ( <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg> );
+        const ImageIcon = ({ size = 20, className = "" }) => ( <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg> );
+        
+        // --- Circular Gallery Component ---
+        function CircularGallery({ items }) {
+          const [rotation, setRotation] = useState(0);
+          const galleryRef = useRef(null);
+          const [isDragging, setIsDragging] = useState(false);
+          const [startX, setStartX] = useState(0);
+          const [lastX, setLastX] = useState(0);
+          const [isHovering, setIsHovering] = useState(false);
+          const animationFrameRef = useRef();
+          
+          const [dimensions, setDimensions] = useState({
+            itemWidth: 300,
+            itemHeight: 200,
+            radius: 500,
+          });
+
+          const updateDimensions = useCallback(() => {
+            const screenWidth = window.innerWidth;
+            let newItemWidth = 300;
+            let newItemHeight = 200;
+            let newRadius = 500;
+            
+            if (screenWidth < 768) {
+              newItemWidth = 200;
+              newItemHeight = 150;
+              newRadius = 250;
+            } else if (screenWidth < 1024) {
+              newItemWidth = 250;
+              newItemHeight = 175;
+              newRadius = 400;
+            }
+            
+            setDimensions({
+              itemWidth: newItemWidth,
+              itemHeight: newItemHeight,
+              radius: newRadius
+            });
+          }, []);
+
+          useEffect(() => {
+            updateDimensions();
+            window.addEventListener('resize', updateDimensions);
+            return () => window.removeEventListener('resize', updateDimensions);
+          }, [updateDimensions]);
+
+          const totalItems = items.length;
+          const angleStep = 360 / totalItems;
+
+          const handleMouseDown = useCallback((e) => {
+            e.preventDefault();
+            setIsDragging(true);
+            setStartX(e.clientX);
+            setLastX(e.clientX);
+          }, []);
+
+          const handleTouchStart = useCallback((e) => {
+            if (e.touches.length === 1) {
+              setIsDragging(true);
+              setStartX(e.touches[0].clientX);
+              setLastX(e.touches[0].clientX);
+            }
+          }, []);
+
+          const handleMouseMove = useCallback((e) => {
+            if (!isDragging) return;
+            const deltaX = e.clientX - lastX;
+            setRotation(prevRotation => prevRotation + deltaX * 0.5);
+            setLastX(e.clientX);
+          }, [isDragging, lastX]);
+
+          const handleTouchMove = useCallback((e) => {
+            if (!isDragging || e.touches.length !== 1) return;
+            const deltaX = e.touches[0].clientX - lastX;
+            setRotation(prevRotation => prevRotation + deltaX * 0.5);
+            setLastX(e.touches[0].clientX);
+          }, [isDragging, lastX]);
+
+          const handleMouseUp = useCallback(() => { setIsDragging(false); }, []);
+          const handleTouchEnd = useCallback(() => { setIsDragging(false); }, []);
+
+          useEffect(() => {
+            const galleryElement = galleryRef.current;
+            if (!galleryElement) return;
+
+            galleryElement.addEventListener('mousedown', handleMouseDown);
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
+            galleryElement.addEventListener('touchstart', handleTouchStart, { passive: false });
+            window.addEventListener('touchmove', handleTouchMove, { passive: false });
+            window.addEventListener('touchend', handleTouchEnd);
+
+            return () => {
+              galleryElement.removeEventListener('mousedown', handleMouseDown);
+              window.removeEventListener('mousemove', handleMouseMove);
+              window.removeEventListener('mouseup', handleMouseUp);
+              galleryElement.removeEventListener('touchstart', handleTouchStart);
+              window.removeEventListener('touchmove', handleTouchMove);
+              window.removeEventListener('touchend', handleTouchEnd);
+            };
+          }, [handleMouseDown, handleMouseMove, handleMouseUp, handleTouchStart, handleTouchMove, handleTouchEnd]);
+
+          useEffect(() => {
+            const autoRotate = () => {
+              if (!isDragging && !isHovering) {
+                setRotation(prev => prev + 0.03); 
+              }
+              animationFrameRef.current = requestAnimationFrame(autoRotate);
+            };
+            animationFrameRef.current = requestAnimationFrame(autoRotate);
+            return () => {
+              if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+              }
+            };
+          }, [isDragging, isHovering]);
+
+          return (
+            <div 
+              className="circular-gallery-container flex items-center justify-center min-h-[500px]"
+              onMouseEnter={() => setIsHovering(true)}
+              onMouseLeave={() => setIsHovering(false)}
+            >
+              <div
+                ref={galleryRef}
+                className="circular-gallery-items"
+                style={{ transform: `rotateY(${rotation}deg)` }}
+              >
+                {items.map((item, index) => {
+                  const angle = index * angleStep;
+                  return (
+                    <div
+                      key={index}
+                      className="circular-gallery-item flex flex-col items-center justify-center bg-white transform"
+                      style={{
+                        transform: `rotateY(${angle}deg) translateZ(${dimensions.radius}px)`,
+                        width: `${dimensions.itemWidth}px`,
+                        height: `${dimensions.itemHeight}px`,
+                        marginLeft: `-${dimensions.itemWidth / 2}px`,
+                        marginTop: `-${dimensions.itemHeight / 2}px`,
+                        zIndex: Math.floor(Math.cos((angle - rotation) * Math.PI / 180) * 100)
+                      }}
+                    >
+                      <img
+                        src={item.image}
+                        alt="A snapshot from our projects"
+                        className="w-full h-full object-cover rounded-md pointer-events-none"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = `https://placehold.co/800x600/E5E7EB/1F2937?text=Image+Unavailable`;
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        }
+        
+        // --- Main App Component ---
+        function App() {
+            const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+            const toggleMenu = () => {
+                setIsMenuOpen(!isMenuOpen);
+            };
+            
+            const closeMenu = () => {
+                setIsMenuOpen(false);
+            }
+
+          const content = {
+            nav: {
+              brand: 'Together We Can',
+              home: 'Home',
+              contribute : 'Contribute',
+              about: 'About',
+              abhyasika: 'Abhyasika',
+              mentalHealth: 'Mental Health',
+              projects: 'Projects',
+              gallery: 'Gallery',
+              contact: 'Contact',
+            },
+            hero: {
+              heading: 'Empowering Communities, Building Brighter Futures',
+              tagline: '',
+              cta: 'Contribute Now',
+            },
+            about: {
+              title: 'About Us',
+              intro: 'At Together We Can Foundation (TWC), we believe that meaningful change begins when people come together. Established by a group of passionate young individuals, the foundation was created with a vision to give back to society and build a stronger, healthier community.',
+              mission: {
+                title: 'Our Mission',
+                text: 'To empower individuals and communities through education and mental health awareness, ensuring equal access to knowledge, resources, and opportunities for growth.'
+              },
+              whatWeDo: {
+                title: 'What We Do',
+                text: 'We design and implement initiatives that address real community needs, including:',
+                items: [
+                  'Workshops & Training to build skills and confidence',
+                  'Awareness Campaigns on education and mental well-being',
+                  'Community Outreach Programs to support the underprivileged'
+                ],
+                outro: 'Every effort is rooted in our belief that together, we can create lasting impact.'
+              },
+              strength: {
+                title: 'Our Strength',
+                text: 'Our progress has been possible because of our dedicated volunteers and supportive well-wishers. Their commitment inspires us to keep innovating and expanding our reach.'
+              },
+              vision: {
+                title: 'Our Vision',
+                text: 'A society where education and mental health support are accessible to all, leading to an inclusive, empowered, and inspired future.'
+              },
+            },
+            abhyasika: {
+              title: 'Abhyasika – Making Learning Simple',
+              intro: "In today’s competitive world, many students struggle with subjects like Mathematics, Science, or other complex topics. Difficult words, complicated formulas, and abstract concepts often lower their confidence and make learning stressful.",
+              approach: "Through Abhyasika, our unique learning initiative, we make tough subjects easier and more engaging. We adopt simple, interactive teaching methods where:",
+              items: [
+                'Complex topics are broken down into small, manageable steps',
+                'Concepts are explained through stories, visuals, and real-life examples',
+                'Students learn in a fun, friendly, and practical environment'
+              ],
+              goal: 'Our aim is not just to provide textbook knowledge, but to ensure students understand how to apply learning in everyday life and their future careers.',
+              moto: '✨ Abhyasika = Learning Made Simple, Confidence Doubled!',
+            },
+            mentalHealth: {
+                title: 'Mental Health – The Key to True Progress',
+                intro: 'At Together We Can Foundation (TWC), we believe mental health is just as important as physical health. A balanced mind, positive thinking, and the ability to handle stress are essential for living a happy and successful life.',
+                commitment: {
+                  title: 'Our Commitment',
+                  text: 'We are dedicated to:',
+                  items: [
+                    'Raising awareness about the importance of mental health',
+                    'Creating supportive and stress-free spaces where people can thrive',
+                    'Encouraging emotional well-being as an everyday priority'
+                  ]
+                },
+                whatWeDo: {
+                  title: 'What We Do',
+                  text: 'Through our initiatives, we reach out to individuals and communities with the support they need. Our efforts include:',
+                  items: [
+                    'Counseling Services – professional guidance and emotional support',
+                    'Workshops & Awareness Programs – building skills for stress management, mindfulness, and resilience',
+                    'Dialogue Sessions – open conversations to reduce stigma and promote mental well-being',
+                    'Community Campaigns – spreading awareness to every section of society'
+                  ]
+                },
+                belief: {
+                  title: 'Our Belief',
+                  text: 'We stand by the thought that:',
+                  quote: '“A healthy mind is the root of creativity, strong relationships, and lasting progress.”',
+                  outro: 'By working together, we can ensure that mental health becomes a shared priority and a foundation for a better future.'
+                }
+            },
+            projects: {
+              title: 'Our Projects & Initiatives',
+              intro: 'At Together We Can Foundation (TWC), we run diverse initiatives to address social, educational, and community needs. Each project is designed to bring hope, support, and opportunities to people from all walks of life.',
+              categories: [
+                {
+                  title: 'Annadan Yojana (Food Donation Program)',
+                  items: [
+                    'Poli Yojana – Nutritious chapatis and vegetables are distributed daily to underprivileged children, the elderly, and specially-abled individuals.',
+                    'Food Distribution – Essential groceries like rice, pulses, and vegetables are donated to Old Age Homes, shelters, and needy families.'
+                  ]
+                },
+                {
+                  title: 'Police Support Initiative',
+                  items: [
+                    'Salute to Police – To acknowledge the tireless service of police personnel, TWC provides them with refreshments every Saturday night. This gesture of gratitude has continued consistently.'
+                  ]
+                },
+                {
+                  title: 'Education Programs',
+                  items: [
+                    'Shikshan Yojana – Every child deserves the right to education. TWC distributes books, notebooks, and study material to children in villages and urban slums who lack basic educational resources.',
+                    'Abhyasika (Study Centers) – Free study centers are run for school-going children, where concepts are explained simply and doubts are cleared. Current centers include:',
+                  ],
+                  subItems: [
+                    'Homeless Children’s Center',
+                    'Naupada Abhyasika',
+                    'Yeoor Abhyasika'
+                  ]
+                },
+                {
+                  title: 'Awareness & Community Initiatives',
+                  items: [
+                    'Lectures & Talks – Expert-led sessions across fields to spread awareness and inspire communities.',
+                    'Mental Health Counseling – Counseling sessions for students and police personnel to promote emotional well-being.',
+                    'Sports Day for Orphans – Fun and motivational sports activities for orphanage children, with prizes and encouragement.',
+                    'Diwali Program – Distribution of clothes, food, and sweets to tribal children during festivals.',
+                    'Talent & Creativity Activities – Fancy dress competitions, drawing contests, and other creative events for children.',
+                    'Traditional Games Revival – Promoting forgotten games like lagori, gilli-danda, and kho-kho to keep cultural heritage alive.'
+                  ]
+                },
+                {
+                  title: 'Special Focus – Children’s Growth & Joy',
+                  items: [
+                    'At the heart of all our programs lies one mission: to bring smiles, confidence, and opportunities to children who need them most. From education to mental health, sports to cultural activities, we are committed to their holistic development.'
+                  ],
+                  outro: 'With the support of our volunteers and well-wishers, these projects continue to create meaningful impact across communities.'
+                }
+              ]
+            },
+            galleryPreview: {
+                title: 'Our Work in Action',
+                body: 'A few snapshots from our community initiatives and events.'
+            },
+            contact: {
+              title: 'Get in Touch',
+              body: 'Have questions or want to get involved? We would love to hear from you.',
+              phone: 'Phone',
+              email: 'Email',
+              address: 'Address',
+            },
+            footer: {
+              copyright: '© 2025 Together We Can Foundation. All rights reserved.| Website design created by Rrucha Wamanse and Gautam Papat',
+            },
+          };
+          
+          const galleryItems = [
+            { image: 'https://togetherwecan21.org/img/1.jpg' },
+            { image: 'https://togetherwecan21.org/img/2.jpg' },
+            { image: 'https://togetherwecan21.org/img/3.jpg' },
+            { image: 'https://togetherwecan21.org/img/4.jpg' },
+            { image: 'https://togetherwecan21.org/img/5.jpg' },
+            { image: 'https://togetherwecan21.org/img/6.jpg' },
+            { image: 'https://togetherwecan21.org/img/7.jpg' },
+            { image: 'https://togetherwecan21.org/img/8.jpg' },
+          ];
+
+          return (
+            <div className="text-gray-800 antialiased">
+              
+              {/* --- NAVBAR --- */}
+              <nav className="fixed w-full top-0 z-50 bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm transition-all duration-300">
+                <div className="container mx-auto flex items-center justify-between p-4 lg:px-8">
+                  
+                  {/* Logo / Brand */}
+                  <a href="#hero" className="flex items-center space-x-3 group" onClick={closeMenu}>
+                    <img src="https://togetherwecan21.org/img/logo.jpg" alt="TWC Foundation Logo" className="w-17 h-12 md:w-18 md:h-14 rounded-full shadow-md group-hover:scale-105 transition-transform duration-300 border-2 border-pink-50" />
+                    <span className="font-bold text-lg md:text-xl lg:text-2xl text-gray-800 tracking-tight group-hover:text-pink-600 transition-colors">{content.nav.brand}</span>
+                  </a>
+                  
+                  {/* Desktop Menu - Hidden below XL (1280px) to prevent squashing */}
+                  <div className="hidden xl:flex items-center space-x-1">
+                    <a href="#about" className="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-pink-600 hover:bg-pink-50 transition-all duration-200 flex items-center space-x-2">
+                      <Info size={16} /><span>{content.nav.about}</span>
+                    </a>
+                    <a href="#abhyasika" className="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-pink-600 hover:bg-pink-50 transition-all duration-200 flex items-center space-x-2">
+                        <BookOpen size={16} /><span>{content.nav.abhyasika}</span>
+                    </a>
+                    <a href="#mental-health" className="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-pink-600 hover:bg-pink-50 transition-all duration-200 flex items-center space-x-2">
+                        <Brain size={16} /><span>{content.nav.mentalHealth}</span>
+                    </a>
+                    <a href="#projects" className="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-pink-600 hover:bg-pink-50 transition-all duration-200 flex items-center space-x-2">
+                      <HandHelping size={16} /><span>{content.nav.projects}</span>
+                    </a>
+                    <a href="gallery_en.html" className="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-pink-600 hover:bg-pink-50 transition-all duration-200 flex items-center space-x-2">
+                      <ImageIcon size={16} /><span>{content.nav.gallery}</span>
+                    </a>
+                    <a href="#contact" className="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-pink-600 hover:bg-pink-50 transition-all duration-200 flex items-center space-x-2">
+                      <Phone size={16} /><span>{content.nav.contact}</span>
+                    </a>
+                     <a href="upi.html" className="ml-2 px-5 py-2.5 rounded-full text-sm font-semibold bg-pink-600 text-white hover:bg-pink-700 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 flex items-center space-x-2">
+                      <HandHelping size={16} /><span>{content.nav.contribute}</span>
+                    </a>
+                    <a href="marathi.html" className="ml-2 p-2.5 rounded-full bg-rose-50 text-pink-600 hover:bg-rose-100 transition-colors duration-200 text-xs font-bold border border-rose-100" aria-label="Switch to Marathi">
+                      <span>मराठी</span>
+                    </a>
+                  </div>
+
+                  {/* Mobile Menu Button - Visible below XL */}
+                  <button onClick={toggleMenu} className="xl:hidden p-2 rounded-full text-gray-600 hover:bg-pink-50 hover:text-pink-600 transition-colors focus:outline-none">
+                    <Menu size={28} />
+                  </button>
+                </div>
+              </nav>
+
+              {/* Mobile Full Screen Menu Overlay */}
+              {isMenuOpen && (
+                  <div className="fixed inset-0 z-[60] flex flex-col bg-white/95 backdrop-blur-xl animate-fade-in-down">
+                    <div className="flex justify-end p-6">
+                        <button onClick={toggleMenu} className="p-2 rounded-full text-gray-500 hover:text-pink-600 hover:bg-pink-50 transition-colors">
+                          <X size={32} />
+                        </button>
+                    </div>
+                    
+                    <div className="flex-1 flex flex-col items-center justify-center space-y-6 overflow-y-auto pb-10">
+                        <a onClick={closeMenu} href="#about" className="text-2xl font-semibold text-gray-800 hover:text-pink-600 transition-colors">{content.nav.about}</a>
+                        <a onClick={closeMenu} href="#abhyasika" className="text-2xl font-semibold text-gray-800 hover:text-pink-600 transition-colors">{content.nav.abhyasika}</a>
+                        <a onClick={closeMenu} href="#mental-health" className="text-2xl font-semibold text-gray-800 hover:text-pink-600 transition-colors">{content.nav.mentalHealth}</a>
+                        <a onClick={closeMenu} href="#projects" className="text-2xl font-semibold text-gray-800 hover:text-pink-600 transition-colors">{content.nav.projects}</a>
+                        <a onClick={closeMenu} href="gallery_en.html" className="text-2xl font-semibold text-gray-800 hover:text-pink-600 transition-colors">{content.nav.gallery}</a>
+                        <a onClick={closeMenu} href="#contact" className="text-2xl font-semibold text-gray-800 hover:text-pink-600 transition-colors">{content.nav.contact}</a>
+                        
+                        <div className="pt-6 w-full max-w-xs flex flex-col gap-4 px-6">
+                            <a href="upi.html" className="w-full py-4 rounded-xl text-lg font-bold bg-pink-600 text-white text-center shadow-lg active:scale-95 transition-transform">
+                                {content.nav.contribute}
+                            </a>
+                            <a href="marathi.html" className="w-full py-3 rounded-xl text-lg font-medium bg-rose-50 text-pink-700 text-center border border-rose-100 active:scale-95 transition-transform">
+                                मराठी
+                            </a>
+                        </div>
+                    </div>
+                  </div>
+              )}
+
+              {/* --- REST OF THE CONTENT (UNCHANGED LOGIC, PRESERVED STRUCTURE) --- */}
+              
+              <section id="hero" className="relative bg-gradient-to-r from-rose-500 to-pink-600 text-white pt-32 pb-24 md:pt-48 md:pb-32 text-center flex items-center justify-center min-h-[60vh] md:min-h-[80vh] overflow-hidden">
+                <div className="container mx-auto px-4 z-10">
+                  <div className="animate-fade-in-down">
+                      <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold mb-4 md:mb-6 leading-tight drop-shadow-md">
+                        {content.hero.heading}
+                      </h1>
+                  </div>
+                  <p className="text-lg sm:text-xl md:text-2xl font-light mb-8 md:mb-10 animate-fade-in-up max-w-3xl mx-auto drop-shadow-sm">
+                    {content.hero.tagline}
+                  </p>
+                  
+                </div>
+                <div className="absolute inset-0 bg-black/10 mix-blend-multiply"></div>
+                {/* Decorative circles */}
+                <div className="absolute top-20 left-10 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-20 right-10 w-64 h-64 bg-pink-400/20 rounded-full blur-3xl"></div>
+              </section>
+
+              <section id="about" className="py-16 md:py-24 bg-white relative">
+                <div className="container mx-auto px-4">
+                  <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-20">
+                    <div className="md:w-1/2 relative">
+                        <div className="absolute -inset-4 bg-pink-100/50 rounded-3xl transform -rotate-2"></div>
+                        <img src="https://togetherwecan21.org/img/educators.jpg" alt="A group of people working together" className="relative rounded-2xl shadow-2xl transform hover:scale-[1.02] transition-transform duration-500 w-full object-cover" />
+                    </div>
+                    <div className="md:w-1/2 space-y-8 text-gray-600 leading-relaxed">
+                        <div>
+                            <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6">{content.about.title}</h2>
+                            <p className="text-lg">{content.about.intro}</p>
+                        </div>
+                        
+                        <div className="bg-pink-50/50 p-6 rounded-2xl border border-pink-100">
+                            <h3 className="text-xl font-bold text-pink-600 mb-2 flex items-center gap-2"><Brain size={20}/> {content.about.mission.title}</h3>
+                            <p className="text-gray-700">{content.about.mission.text}</p>
+                        </div>
+                        
+                        <div>
+                            <h3 className="text-2xl font-bold text-gray-900 mb-3">{content.about.whatWeDo.title}</h3>
+                            <p className="mb-4">{content.about.whatWeDo.text}</p>
+                            <ul className="space-y-3">
+                                {content.about.whatWeDo.items.map((item, index) => (
+                                    <li key={index} className="flex items-start gap-3">
+                                        <span className="mt-1.5 w-2 h-2 bg-pink-500 rounded-full flex-shrink-0"></span>
+                                        <span>{item}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                            <p className="mt-4 text-sm font-medium text-pink-600">{content.about.whatWeDo.outro}</p>
+                        </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section id="abhyasika" className="py-16 md:py-24 bg-gray-50 relative overflow-hidden">
+                   {/* Background Elements */}
+                  <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                     <div className="absolute top-10 left-[-50px] w-40 h-40 bg-blue-100 rounded-full blur-3xl opacity-60"></div>
+                     <div className="absolute bottom-10 right-[-50px] w-40 h-40 bg-pink-100 rounded-full blur-3xl opacity-60"></div>
+                  </div>
+
+                  <div className="container mx-auto px-4 text-center relative z-10">
+                    <h2 className="text-3xl md:text-5xl font-extrabold mb-6 text-gray-900">{content.abhyasika.title}</h2>
+                    <div className="max-w-4xl mx-auto space-y-8 text-gray-600 text-lg leading-relaxed">
+                      <p>{content.abhyasika.intro}</p>
+                      
+                      <div className="bg-white p-8 rounded-3xl shadow-lg border border-gray-100">
+                          <p className="font-medium text-gray-800 mb-6">{content.abhyasika.approach}</p>
+                          <div className="grid md:grid-cols-3 gap-6 text-left">
+                            {content.abhyasika.items.map((item, index) => (
+                                <div key={index} className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                    <div className="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center text-pink-600 font-bold mb-3">{index + 1}</div>
+                                    <p className="text-sm">{item}</p>
+                                </div>
+                            ))}
+                          </div>
+                      </div>
+                      
+                      <p className="italic">{content.abhyasika.goal}</p>
+                    </div>
+                    <div className="mt-12 inline-block px-8 py-4 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg transform hover:-translate-y-1 transition-transform">
+                      <p className="text-xl md:text-2xl font-bold">{content.abhyasika.moto}</p>
+                    </div>
+                  </div>
+              </section>
+
+              <section id="mental-health" className="py-16 md:py-24 bg-white">
+                  <div className="container mx-auto px-4">
+                      <div className="text-center mb-16">
+                          <h2 className="text-3xl md:text-5xl font-extrabold mb-6 text-gray-900">{content.mentalHealth.title}</h2>
+                          <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">{content.mentalHealth.intro}</p>
+                      </div>
+                      
+                      <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+                        <div className="bg-blue-50/50 p-8 rounded-3xl border border-blue-100 hover:shadow-lg transition-shadow duration-300">
+                            <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 mb-6">
+                                <Brain size={28} />
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-900 mb-4">{content.mentalHealth.commitment.title}</h3>
+                            <p className="text-gray-600 mb-6">{content.mentalHealth.commitment.text}</p>
+                            <ul className="space-y-3">
+                                {content.mentalHealth.commitment.items.map((item, index) => (
+                                    <li key={index} className="flex items-center gap-3 text-gray-700 bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                                        {item}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        <div className="bg-pink-50/50 p-8 rounded-3xl border border-pink-100 hover:shadow-lg transition-shadow duration-300">
+                             <div className="w-12 h-12 bg-pink-100 rounded-2xl flex items-center justify-center text-pink-600 mb-6">
+                                <HandHelping size={28} />
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-900 mb-4">{content.mentalHealth.whatWeDo.title}</h3>
+                            <p className="text-gray-600 mb-6">{content.mentalHealth.whatWeDo.text}</p>
+                            <ul className="space-y-3">
+                                {content.mentalHealth.whatWeDo.items.map((item, index) => (
+                                    <li key={index} className="flex items-center gap-3 text-gray-700 bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="w-1.5 h-1.5 bg-pink-500 rounded-full"></span>
+                                        {item}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                      </div>
+
+                      <div className="mt-16 text-center">
+                         <div className="inline-block p-8 rounded-3xl bg-gray-900 text-white max-w-3xl relative overflow-hidden shadow-2xl">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-pink-500 to-purple-500"></div>
+                            <p className="text-lg font-medium text-gray-300 mb-3">{content.mentalHealth.belief.text}</p>
+                            <p className="text-2xl md:text-3xl font-bold leading-tight mb-4 text-white">{content.mentalHealth.belief.quote}</p>
+                            <p className="text-gray-400 text-sm uppercase tracking-widest">{content.mentalHealth.belief.outro}</p>
+                         </div>
+                      </div>
+                  </div>
+              </section>
+
+              <section id="projects" className="py-16 md:py-24 bg-gray-50">
+                  <div className="container mx-auto px-4">
+                      <div className="text-center mb-16">
+                        <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900">
+                            {content.projects.title}
+                        </h2>
+                        <p className="text-lg text-gray-600 mt-4 max-w-3xl mx-auto">{content.projects.intro}</p>
+                      </div>
+                      
+                      <div className="grid gap-8 max-w-5xl mx-auto">
+                        {content.projects.categories.map((category, index) => (
+                            <div key={index} className="bg-white p-8 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100">
+                                <div className="flex items-start gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold text-lg flex-shrink-0">
+                                        {index + 1}
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="text-2xl font-bold text-gray-900 mb-4">{category.title}</h3>
+                                        <ul className="space-y-3">
+                                            {category.items.map((item, i) => (
+                                                <li key={i} className="text-gray-600 leading-relaxed pl-4 border-l-2 border-pink-200">
+                                                    {item}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        {category.subItems && (
+                                            <div className="mt-4 flex flex-wrap gap-2">
+                                                {category.subItems.map((subItem, i) => (
+                                                    <span key={i} className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full font-medium">
+                                                        {subItem}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                        {category.outro && <p className="mt-6 text-pink-700 font-medium italic bg-pink-50 p-4 rounded-xl">{category.outro}</p>}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                      </div>
+                  </div>
+              </section>
+
+              <section className="py-16 md:py-24 bg-white text-center">
+                  <div className="container mx-auto px-4">
+                      <h2 className="text-3xl md:text-5xl font-extrabold mb-4 text-gray-900">
+                          {content.galleryPreview.title}
+                      </h2>
+                      <p className="text-base md:text-lg text-gray-600 mb-12 max-w-2xl mx-auto">{content.galleryPreview.body}</p>
+                      <div className="relative w-full overflow-hidden">
+                          <CircularGallery items={galleryItems} />
+                      </div>
+                      <div className="mt-12">
+                          <a href="gallery_en.html" className="inline-flex items-center gap-2 text-pink-600 font-bold hover:text-pink-700 transition-colors border-b-2 border-pink-200 hover:border-pink-600 pb-1">
+                              View Full Gallery <ImageIcon size={20}/>
+                          </a>
+                      </div>
+                  </div>
+              </section>
+
+              <section id="contact" className="py-16 md:py-24 bg-gradient-to-br from-gray-50 to-pink-50">
+                <div className="container mx-auto px-4 text-center">
+                  <h2 className="text-3xl md:text-5xl font-extrabold mb-6 text-gray-900">
+                      {content.contact.title}
+                  </h2>
+                  <p className="text-base md:text-lg text-gray-600 mb-16 max-w-2xl mx-auto">{content.contact.body}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    {/* Phone Card */}
+                    <div className="bg-white rounded-3xl p-8 shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col items-center border border-gray-100 group">
+                      <div className="w-16 h-16 rounded-2xl bg-pink-50 flex items-center justify-center mb-6 group-hover:bg-pink-100 transition-colors">
+                        <Phone size={32} className="text-pink-500 group-hover:text-pink-600" />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2 text-gray-900">{content.contact.phone}</h3>
+                      <p className="text-gray-500 font-medium">Aarti Dandekar : +91 98191 56578 </p><p className="text-gray-500 font-medium"> Madhura Ketkar : +91 98195 42364</p>
+                    </div>
+                    {/* Email Card */}
+                    <div className="bg-white rounded-3xl p-8 shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col items-center border border-gray-100 group">
+                      <div className="w-16 h-16 rounded-2xl bg-pink-50 flex items-center justify-center mb-6 group-hover:bg-pink-100 transition-colors">
+                        <Mail size={32} className="text-pink-500 group-hover:text-pink-600" />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2 text-gray-900">{content.contact.email}</h3>
+                      <a href="mailto:togetherwecan0307@gmail.com" className="text-gray-500 font-medium hover:text-pink-600 transition-colors">togetherwecan0307@gmail.com</a>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="py-20 bg-gradient-to-r from-rose-500 to-pink-600 text-white text-center relative overflow-hidden">
+                {/* Decorative elements */}
+                <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10 pointer-events-none">
+                    <div className="absolute -top-24 -left-24 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+                    <div className="absolute top-1/2 right-10 w-48 h-48 bg-white rounded-full blur-3xl"></div>
+                </div>
+                
+                <div className="container mx-auto px-4 relative z-10">
+                    <h2 className="text-3xl md:text-5xl font-extrabold mb-6 tracking-tight">Ready to Make a Difference?</h2>
+                    <p className="text-lg md:text-xl font-medium text-pink-100 mb-10 max-w-2xl mx-auto">
+                        Your support can change lives. Join us in building a brighter, more inclusive future for everyone.
+                    </p>
+                    <a href="upi.html" className="inline-block bg-white text-pink-600 font-bold py-4 px-10 rounded-full shadow-2xl hover:bg-gray-50 transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
+                        {content.hero.cta}
+                    </a>
+                </div>
+              </section>
+
+              <footer className="bg-gray-900 text-white py-12 border-t border-gray-800">
+                <div className="container mx-auto px-4 text-center">
+                    <div className="flex items-center justify-center gap-3 mb-8 opacity-80">
+                         <img src="https://togetherwecan21.org/img/logo.jpg" alt="Logo" className="w-10 h-10 rounded-full grayscale hover:grayscale-0 transition-all duration-500" />
+                         <span className="font-bold text-xl tracking-tight">Together We Can</span>
+                    </div>
+                  <p className="text-sm text-gray-500">{content.footer.copyright}</p>
+                </div>
+              </footer>
+            </div>
+          );
+        }
+
+        const rootElement = document.getElementById('root');
+        if (rootElement) {
+          createRoot(rootElement).render(
+            <React.StrictMode>
+              <App />
+            </React.StrictMode>
+          );
+        }
+    </script>
+</body>
+</html>
