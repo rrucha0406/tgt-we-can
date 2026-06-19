@@ -13,6 +13,7 @@
     <style>
       body {
           font-family: 'Montserrat', sans-serif;
+          scroll-behavior: smooth;
       }
       /* Offset for sticky navbar when scrolling to anchor links */
       #about, #abhyasika, #mental-health, #services, #projects, #contact {
@@ -69,7 +70,7 @@
     <div id="root"></div>
 
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script crossorigin src="https://unpkg.com/@babel/standalone@7.24.0/babel.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     
 
@@ -251,6 +252,18 @@
         // --- Main App Component ---
         function App() {
             const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+            // Handle hash-based anchor scrolling after React finishes rendering
+            useEffect(() => {
+                const hash = window.location.hash;
+                if (hash) {
+                    const id = hash.replace('#', '');
+                    setTimeout(() => {
+                        const el = document.getElementById(id);
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }, 300);
+                }
+            }, []);
 
             const toggleMenu = () => {
                 setIsMenuOpen(!isMenuOpen);
